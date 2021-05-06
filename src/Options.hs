@@ -7,7 +7,7 @@ module Options
 where
 
 import Options.Applicative
-import Paths_odf_client
+import Paths_odf_client (version)
 import Data.Version (showVersion)
 
 import RIO
@@ -25,7 +25,6 @@ optsParser = info options description
     description = fullDesc
                   <> progDesc "ODF Client example"
                   <> header "odf-client - a small example ODF client"
-
 
 versionOption :: Parser (a -> a)
 versionOption = infoOption
