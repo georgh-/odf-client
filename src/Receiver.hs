@@ -57,9 +57,10 @@ writeBody timestamp tmpFolder request = do
   pure $ mkResponse status200 "a"
 
 helpText :: LBS.ByteString
-helpText = "It works! This is the help page of the receiver\n\
-           \Use POST /odf to write ODF messages to disk\n\
-           \Use POST / to consume the HTTP request and ignore it\n\n\
-           \In any case, it is assumed that the body contains the message \
-           \directly, without specifying any parameter." 
+helpText =
+  "It works! This is the help page of the receiver\n\
+  \Use POST /odf to write ODF messages to disk\n\
+  \Use POST / to consume the HTTP request and ignore it\n\n\
+  \In any case, it is assumed that the body contains the message \
+  \directly, without specifying any parameter." 
 
