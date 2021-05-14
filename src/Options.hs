@@ -43,9 +43,9 @@ programOptions =
         <> metavar "PORT")
       
     msgFolder = strOption
-      (short 'f'
-        <> long "msgFolder"
-        <> help "Folder to store messages (default: ./messages)"
+      (short 'd'
+        <> long "message-dir"
+        <> help "Directory to use for messages (default: ./messages)"
         <> value "./messages"
         <> metavar "PATH")
 
