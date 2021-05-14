@@ -11,6 +11,7 @@ import Network.Wai.Handler.Warp (run)
 import RIO
 import RIO.Time
 import RIO.FilePath
+import RIO.Directory (createDirectoryIfMissing)
 import qualified RIO.Text as T
 import qualified RIO.ByteString.Lazy as LBS
 
@@ -37,30 +38,39 @@ waiApp tmpFolder request respond = do
     ("GET",  _)     -> respond $ mkResponse status404 ""
     ("POST", "")    -> respond $ mkResponse status200
                        "Message received correctly. This path \"/\" ignores it"
-    ("POST", "odf") -> respond =<< writeBody timeReceived tmpFolder request
+    ("POST", "odf") -> respond =<< processReq timeReceived tmpFolder request
     (_,      _)     -> respond $ mkResponse status500 "Wrong method and path."
 
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
 
-writeBody :: ZonedTime -> String -> Request -> IO Response
-writeBody timestamp tmpFolder request = do
+processReq :: ZonedTime -> String -> Request -> IO Response
+processReq timestamp tmpFolder request = do
   let
-    timestampText = show timestamp
-    filePath = tmpFolder </> timestampText
+    dirName = tmpFolder </> formatTime defaultTimeLocale "%Y-%m-%d" timestamp
+    fileName = show timestamp
+    
+    filePath = dirName </> fileName
+    createParents = True
 
+  createDirectoryIfMissing createParents dirName
+  writeBody filePath request
+  
+  pure $ mkResponse status200 "Message recived and saved"
+
+writeBody :: FilePath -> Request -> IO ()
+writeBody filePath request =
   withSinkFile filePath $ \dest ->
     runConduit
       $ sourceRequestBody request
      .| dest 
-    
-  pure $ mkResponse status200 "a"
 
 helpText :: LBS.ByteString
 helpText =
   "It works! This is the help page of the receiver\n\
   \Use POST /odf to write ODF messages to disk\n\
-  \Use POST / to consume the HTTP request and ignore it\n\n\
+  \Use POST / to consume the HTTP request and ignore it\n\
+  \n\
   \In any case, it is assumed that the body contains the message \
   \directly, without specifying any parameter." 
 
