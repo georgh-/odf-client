@@ -1,8 +1,7 @@
 module Options
   ( Options
   , optPort
-  , optTmpFolder
-  , optDstFolder
+  , optMsgFolder
   , getOptions)
 where
 
@@ -14,8 +13,7 @@ import RIO
 
 data Options = Options
   { optPort :: !Int
-  , optTmpFolder :: !String
-  , optDstFolder :: !String
+  , optMsgFolder :: !String
   } deriving Show
 
 optsParser :: ParserInfo Options
@@ -35,7 +33,7 @@ versionOption = infoOption
 
 programOptions :: Parser Options
 programOptions =
-  Options <$> port <*> tmpFolder <*> dstFolder
+  Options <$> port <*> msgFolder
   where
     port = option auto
       (short 'p'
@@ -44,20 +42,12 @@ programOptions =
         <> value 8080
         <> metavar "PORT")
       
-    tmpFolder = strOption
-      (short 't'
-        <> long "tmpFolder"
-        <> help "Folder to store messages before they are processed"
-        <> value "./tmp"
-        <> metavar "PATH")
-      
-    dstFolder = strOption
-      (short 'd'
-        <> long "dstFolder"
-        <> help "Folder to store processed"
+    msgFolder = strOption
+      (short 'f'
+        <> long "msgFolder"
+        <> help "Folder to store messages (default: ./messages)"
         <> value "./messages"
         <> metavar "PATH")
-
 
 getOptions :: IO Options
 getOptions = execParser optsParser

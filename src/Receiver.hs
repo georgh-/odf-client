@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Receiver (receive) where
 
-import Options (Options, optPort, optTmpFolder)
+import Options (Options, optPort, optMsgFolder)
 
 import Network.Wai
 import Network.HTTP.Types
@@ -22,12 +22,12 @@ import Network.Wai.Conduit
 receive :: Options -> IO ()
 receive ops = do
   let port = optPort ops
-      tmpFolder = optTmpFolder ops
+      msgFolder = optMsgFolder ops
   
-  run port (waiApp tmpFolder)
+  run port (waiApp msgFolder)
 
 waiApp :: String -> Application
-waiApp tmpFolder request respond = do
+waiApp msgFolder request respond = do
   timeReceived <- getZonedTime
 
   let path = T.concat $ pathInfo request
@@ -38,16 +38,16 @@ waiApp tmpFolder request respond = do
     ("GET",  _)     -> respond $ mkResponse status404 ""
     ("POST", "")    -> respond $ mkResponse status200
                        "Message received correctly. This path \"/\" ignores it"
-    ("POST", "odf") -> respond =<< processReq timeReceived tmpFolder request
+    ("POST", "odf") -> respond =<< processReq timeReceived msgFolder request
     (_,      _)     -> respond $ mkResponse status500 "Wrong method and path."
 
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
 
 processReq :: ZonedTime -> String -> Request -> IO Response
-processReq timestamp tmpFolder request = do
+processReq timestamp msgFolder request = do
   let
-    dirName = tmpFolder </> formatTime defaultTimeLocale "%Y-%m-%d" timestamp
+    dirName = msgFolder </> formatTime defaultTimeLocale "%Y-%m-%d" timestamp
     fileName = show timestamp
     
     filePath = dirName </> fileName
