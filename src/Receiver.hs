@@ -16,7 +16,7 @@ import qualified RIO.Text as T
 import qualified RIO.ByteString.Lazy as LBS
 
 import Data.Conduit
-import Data.Conduit.Combinators (withSinkFile)
+import Data.Conduit.Combinators (withSinkFile, sinkNull)
 import Network.Wai.Conduit
 
 receive :: Options -> IO ()
@@ -36,13 +36,24 @@ waiApp msgFolder request respond = do
   case (method, path) of
     ("GET",  "")    -> respond $ mkResponse status200 helpText
     ("GET",  _)     -> respond $ mkResponse status404 ""
-    ("POST", "")    -> respond $ mkResponse status200
-                       "Message received correctly. This path \"/\" ignores it"
+    ("POST", "")    -> respond =<< ignoreReq request
     ("POST", "odf") -> respond =<< processReq timeReceived msgFolder request
     (_,      _)     -> respond $ mkResponse status500 "Wrong method and path."
 
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
+
+ignoreReq :: Request -> IO Response
+ignoreReq request = do
+  -- The full request must be consumed before responding, otherwise
+  -- it would be reported as an error by the HTTP sender
+  runConduit
+      $ sourceRequestBody request
+     .| sinkNull
+
+  pure $ mkResponse
+    status200
+    "Message received correctly. This path \"/\" ignores it"
 
 processReq :: ZonedTime -> FilePath -> Request -> IO Response
 processReq timestamp msgFolder request = do
