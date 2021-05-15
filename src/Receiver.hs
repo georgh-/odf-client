@@ -44,7 +44,7 @@ waiApp msgFolder request respond = do
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
 
-processReq :: ZonedTime -> String -> Request -> IO Response
+processReq :: ZonedTime -> FilePath -> Request -> IO Response
 processReq timestamp msgFolder request = do
   let
     dirName = msgFolder </> formatTime defaultTimeLocale "%Y-%m-%d" timestamp
