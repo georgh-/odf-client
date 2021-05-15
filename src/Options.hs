@@ -38,7 +38,7 @@ programOptions =
     port = option auto
       (short 'p'
         <> long "port"
-        <> help "TCP Port to listen to"
+        <> help "TCP Port to listen to (default: 8080)"
         <> value 8080
         <> metavar "PORT")
       
