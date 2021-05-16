@@ -33,12 +33,20 @@ waiApp msgFolder request respond = do
   let path = T.concat $ pathInfo request
       method = requestMethod request
 
-  case (method, path) of
-    ("GET",  "")    -> respond $ mkResponse status200 helpText
-    ("GET",  _)     -> respond $ mkResponse status404 ""
-    ("POST", "")    -> respond =<< ignoreReq request
-    ("POST", "odf") -> respond =<< processReq timeReceived msgFolder request
-    (_,      _)     -> respond $ mkResponse status500 "Wrong method and path."
+  case method of
+    "GET"  -> case path of
+               "" -> respond $ mkResponse status200 helpText
+               _  -> respond $ mkResponse status404 ""
+
+    "POST" -> case path of
+               ""    -> respond =<< ignoreReq request
+               "odf" -> respond =<< processReq timeReceived msgFolder request
+               _     -> respond $ mkResponse status404 ""
+
+    -- HTTP Specifies HEAD is mandatory
+    "HEAD" -> respond $ mkResponse status200 ""
+
+    _      -> respond $ mkResponse status405 "Only GET and POST are accepted."
 
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
