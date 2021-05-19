@@ -1,6 +1,7 @@
 module Options
   ( Options
   , optPort
+  , optTmpFolder
   , optMsgFolder
   , getOptions)
 where
@@ -13,6 +14,7 @@ import RIO
 
 data Options = Options
   { optPort :: !Int
+  , optTmpFolder :: !String
   , optMsgFolder :: !String
   } deriving Show
 
@@ -33,7 +35,7 @@ versionOption = infoOption
 
 programOptions :: Parser Options
 programOptions =
-  Options <$> port <*> msgFolder
+  Options <$> port <*> tmpFolder <*> msgFolder
   where
     port = option auto
       (short 'p'
@@ -42,6 +44,13 @@ programOptions =
         <> value 8080
         <> metavar "PORT")
       
+    tmpFolder = strOption
+      (short 'd'
+        <> long "temp-dir"
+        <> help "Directory to use for temporary messages (default: ./tmp)"
+        <> value "./tmp"
+        <> metavar "PATH")
+
     msgFolder = strOption
       (short 'd'
         <> long "message-dir"
