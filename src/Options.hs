@@ -52,7 +52,7 @@ programOptions =
         <> metavar "PATH")
 
     msgFolder = strOption
-      (short 'd'
+      (short 'm'
         <> long "message-dir"
         <> help "Directory to use for messages (default: ./messages)"
         <> value "./messages"

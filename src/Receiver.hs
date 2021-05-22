@@ -2,7 +2,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Receiver (receive) where
 
-import Options (Options, optPort, optMsgFolder)
+import Options (Options, optPort, optTmpFolder)
+import Files (genTmpFilePath)
 
 import Network.Wai
 import Network.HTTP.Types
@@ -10,7 +11,6 @@ import Network.Wai.Handler.Warp (run)
 
 import RIO
 import RIO.Time
-import RIO.FilePath
 import RIO.Directory (createDirectoryIfMissing)
 import qualified RIO.Text as T
 import qualified RIO.ByteString.Lazy as LBS
@@ -19,15 +19,15 @@ import Data.Conduit
 import Data.Conduit.Combinators (withSinkFile, sinkNull)
 import Network.Wai.Conduit
 
-receive :: Options -> IO ()
-receive ops = do
+receive :: TMVar Bool -> Options -> IO ()
+receive pendingFiles ops = do
   let port = optPort ops
-      msgFolder = optMsgFolder ops
+      tmpFolder = optTmpFolder ops
   
-  run port (waiApp msgFolder)
+  run port (waiApp pendingFiles tmpFolder)
 
-waiApp :: String -> Application
-waiApp msgFolder request respond = do
+waiApp :: TMVar Bool ->  String -> Application
+waiApp pendingFiles tmpFolder request respond = do
   timeReceived <- getZonedTime
 
   let path = T.concat $ pathInfo request
@@ -40,12 +40,15 @@ waiApp msgFolder request respond = do
 
     "POST" -> case path of
                ""    -> respond =<< ignoreReq request
-               "odf" -> respond =<< processReq timeReceived msgFolder request
+               "odf" -> respond =<< processReq
+                                      pendingFiles
+                                      timeReceived
+                                      tmpFolder
+                                      request
                _     -> respond $ mkResponse status404 ""
 
     -- HTTP Specifies HEAD is mandatory
     "HEAD" -> respond $ mkResponse status200 ""
-
     _      -> respond $ mkResponse status405 "Only GET and POST are accepted."
 
 mkResponse :: Status -> LBS.ByteString -> Response
@@ -63,17 +66,16 @@ ignoreReq request = do
     status200
     "Message received correctly. This path \"/\" ignores it"
 
-processReq :: ZonedTime -> FilePath -> Request -> IO Response
-processReq timestamp msgFolder request = do
+processReq ::  TMVar Bool -> ZonedTime -> FilePath -> Request -> IO Response
+processReq pendingFiles timestamp tmpFolder request = do
   let
-    dirName = msgFolder </> formatTime defaultTimeLocale "%Y-%m-%d" timestamp
-    fileName = show timestamp
-    
-    filePath = dirName </> fileName
+    filePath = genTmpFilePath timestamp tmpFolder
     createParents = True
-
-  createDirectoryIfMissing createParents dirName
+  
+  createDirectoryIfMissing createParents tmpFolder
   writeBody filePath request
+
+  _ <- atomically $ tryPutTMVar pendingFiles True
   
   pure $ mkResponse status200 "Message recived and saved"
 
