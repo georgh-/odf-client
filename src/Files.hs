@@ -20,7 +20,7 @@ data ValidTmpFile = ValidTmpFile
   } deriving Show
 
 timestampFormat :: String
-timestampFormat = "%Y-%m-%d %H:%M:%S.%-q %Z"
+timestampFormat = "%Y-%m-%d %H:%M:%S.%q %Z"
 
 messageFolderDateFormat :: String
 messageFolderDateFormat = "%Y-%m-%d"
