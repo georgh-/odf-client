@@ -37,7 +37,8 @@ common common-all
                   , wai-conduit ^>=3.0.0.4
                   , http-types  ^>=0.12
                   , conduit ^>=1.3.4.1
-                  , xml-conduit ^>= 1.9.1.1
+                  , conduit-extra ^>= 1.3.5
+                  , attoparsec ^>= 0.14.1
                     
   default-language: Haskell2010
 
@@ -66,6 +67,8 @@ executable odf-client
                   , Receiver
                   , Files
                   , ProcessMessages
+                  , Parse
+                  , ODFHeader
 
 test-suite odf-test
   import:           common-all

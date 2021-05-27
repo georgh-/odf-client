@@ -11,6 +11,8 @@ where
 import RIO
 import RIO.Time
 import RIO.FilePath
+import Parse
+import ODFHeader (genODFFileName)
 
 data ValidTmpFile = ValidTmpFile
   { vfTimestamp :: !ZonedTime
@@ -36,7 +38,7 @@ genTmpFilePath timestamp tmpFolder =
 parseTmpFilePath :: FilePath -> Maybe ValidTmpFile
 parseTmpFilePath tmpFilePath = do
   let fileName = takeFileName tmpFilePath
-  
+
   timestamp <- parseTimeM
     False -- Do not accept leading and trailing whitespace
     defaultTimeLocale
@@ -45,13 +47,15 @@ parseTmpFilePath tmpFilePath = do
 
   Just $ ValidTmpFile timestamp tmpFilePath
 
-genMsgFilePath :: ValidTmpFile -> FilePath -> FilePath
-genMsgFilePath (ValidTmpFile timestamp filePath) msgFolder =
+genMsgFilePath :: ValidTmpFile -> ODFHeader -> FilePath -> FilePath
+genMsgFilePath (ValidTmpFile timestamp filePath) odfHeader msgFolder =
   let
-    datePath = formatTime
+    datePart = formatTime
                  defaultTimeLocale
                  messageFolderDateFormat
                  timestamp
+    odfPart = genODFFileName odfHeader
+    fileName = takeFileName filePath <> "~" <> odfPart
   in
-    msgFolder </> datePath </> takeFileName filePath
-                 
+    msgFolder </> datePart </> fileName
+

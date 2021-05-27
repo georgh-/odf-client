@@ -1,15 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
-module ProcessMessages (tmpFilesProcessor) where
+module ProcessMessages (tmpFilesProcessor, processTmpFiles) where
 
-import Options (Options, optTmpFolder, optMsgFolder)
 import Files (parseTmpFilePath, genMsgFilePath)
+import Options (Options, optTmpFolder, optMsgFolder)
+import ODFHeader
+import Parse (parseODFHeader, parseGZipHeader)
 
 import RIO hiding (mapM_)
+import RIO.FilePath (takeDirectory)
 import RIO.Directory (createDirectoryIfMissing, renameFile)
 
-import Data.Conduit ( (.|), runConduitRes, ConduitT )
-import Data.Conduit.Combinators (mapM_, sourceDirectory)
-import RIO.FilePath (takeDirectory)
+import Data.Conduit ( (.|), runConduitRes, ConduitT, runConduit, awaitForever, yield )
+import Data.Conduit.Combinators (mapM_, sourceDirectory, withSourceFile)
+import Data.Conduit.Zlib (ungzip)
+import Data.Conduit.Attoparsec (sinkParserEither)
+
 
 tmpFilesProcessor :: TMVar Bool -> Options -> IO ()
 tmpFilesProcessor pendingFiles opts =
@@ -28,14 +33,46 @@ sinkProcessFile msgFolder = mapM_ $ liftIO . processTmpFile msgFolder
 
 processTmpFile :: FilePath -> FilePath -> IO ()
 processTmpFile msgFolder tmpFile = do
+  odfHeader <- extractODFHeader tmpFile
   let
-    maybeValidTmpFile = parseTmpFilePath tmpFile
-    maybeDestPath = genMsgFilePath <$> maybeValidTmpFile <*> Just msgFolder
-
+    mValidTmpFile = parseTmpFilePath tmpFile
+    mDestPath = genMsgFilePath
+                  <$> mValidTmpFile
+                  <*> Just odfHeader
+                  <*> Just msgFolder
   maybe
     (pure ())
     (renameFileParents tmpFile)
-    maybeDestPath
+    mDestPath
+
+extractODFHeader :: FilePath -> IO ODFHeader
+extractODFHeader file = do
+  isCompressed <- isGzipCompressed file
+  let
+    condUngzip =
+      if isCompressed
+        then ungzip
+        else awaitForever yield
+
+  parsed <- withSourceFile file $ \src ->
+    runConduit
+      $ src
+     .| condUngzip
+     .| sinkParserEither parseODFHeader
+
+  pure $ fromRight emptyODFHeader parsed
+
+isGzipCompressed :: FilePath -> IO Bool
+isGzipCompressed file = do
+  parsed <- withSourceFile file $ \src ->
+    runConduit
+      $ src
+     .| sinkParserEither parseGZipHeader
+
+  pure $ either
+    (const False)
+    (const True)
+    parsed
 
 renameFileParents :: FilePath -> FilePath -> IO ()
 renameFileParents origFile destFile = do
