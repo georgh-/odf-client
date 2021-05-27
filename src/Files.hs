@@ -50,10 +50,18 @@ parseTmpFilePath tmpFilePath = do
 genMsgFilePath :: ValidTmpFile -> ODFHeader -> FilePath -> FilePath
 genMsgFilePath (ValidTmpFile timestamp filePath) odfHeader msgFolder =
   let
-    datePart = formatTime
-                 defaultTimeLocale
-                 messageFolderDateFormat
-                 timestamp
+    datePath =
+      formatTime
+        defaultTimeLocale
+        messageFolderDateFormat
+        timestamp
+        
+    timestampPart =
+      formatTime
+        defaultTimeLocale
+        timestampFormat
+        timestamp
+
     odfPart = genODFFileName odfHeader
     fileName = takeFileName filePath <> "~" <> odfPart
   in

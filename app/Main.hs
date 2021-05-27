@@ -3,11 +3,10 @@ module Main (main) where
 
 import Options (getOptions)
 import Receiver (receive)
-import ProcessMessages
+import ProcessMessages (tmpFilesProcessor)
   
 import RIO
 import Control.Concurrent (forkIO)
-import Parse
 
 main :: IO ()
 main = do
@@ -17,6 +16,6 @@ main = do
   -- pending messages are processed
   pendingFiles <- newTMVarIO True
 
-  -- forkIO $ tmpFilesProcessor pendingFiles opts
-  -- receive pendingFiles opts
-  processTmpFiles opts
+  forkIO $ tmpFilesProcessor pendingFiles opts
+  receive pendingFiles opts
+  
