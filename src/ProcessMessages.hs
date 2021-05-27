@@ -33,21 +33,22 @@ sinkProcessFile msgFolder = mapM_ $ liftIO . processTmpFile msgFolder
 
 processTmpFile :: FilePath -> FilePath -> IO ()
 processTmpFile msgFolder tmpFile = do
-  odfHeader <- extractODFHeader tmpFile
+  isCompressed <- isGzipCompressed tmpFile
+  odfHeader <- extractODFHeader isCompressed tmpFile
   let
     mValidTmpFile = parseTmpFilePath tmpFile
     mDestPath = genMsgFilePath
                   <$> mValidTmpFile
                   <*> Just odfHeader
+                  <*> Just isCompressed
                   <*> Just msgFolder
   maybe
     (pure ())
     (renameFileParents tmpFile)
     mDestPath
 
-extractODFHeader :: FilePath -> IO ODFHeader
-extractODFHeader file = do
-  isCompressed <- isGzipCompressed file
+extractODFHeader :: Bool -> FilePath -> IO ODFHeader
+extractODFHeader isCompressed file = do
   let
     condUngzip =
       if isCompressed

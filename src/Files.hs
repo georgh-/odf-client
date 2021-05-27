@@ -47,8 +47,8 @@ parseTmpFilePath tmpFilePath = do
 
   Just $ ValidTmpFile timestamp tmpFilePath
 
-genMsgFilePath :: ValidTmpFile -> ODFHeader -> FilePath -> FilePath
-genMsgFilePath (ValidTmpFile timestamp filePath) odfHeader msgFolder =
+genMsgFilePath :: ValidTmpFile -> ODFHeader -> Bool -> FilePath -> FilePath
+genMsgFilePath (ValidTmpFile timestamp _) odfHeader isCompressed msgFolder =
   let
     datePath =
       formatTime
@@ -63,7 +63,10 @@ genMsgFilePath (ValidTmpFile timestamp filePath) odfHeader msgFolder =
         timestamp
 
     odfPart = genODFFileName odfHeader
-    fileName = takeFileName filePath <> "~" <> odfPart
+
+    ext = if isCompressed then ".xml.gz" else ".xml"
+    
+    fileName = timestampPart <> "~" <> odfPart <> ext
   in
-    msgFolder </> datePart </> fileName
+    msgFolder </> datePath </> fileName 
 
