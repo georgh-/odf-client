@@ -20,7 +20,7 @@ data ValidTmpFile = ValidTmpFile
   } deriving Show
 
 timestampFormat :: String
-timestampFormat = "%Y-%m-%d %H:%M:%S.%q %Z"
+timestampFormat = "%Y-%m-%d %H-%M-%S.%q %z"
 
 messageFolderDateFormat :: String
 messageFolderDateFormat = "%Y-%m-%d"
@@ -30,7 +30,7 @@ genTmpFilePath timestamp tmpFolder =
   let
     fileName = formatTime
                  defaultTimeLocale
-                 timestampFormat
+                 "%Y-%m-%d %H:%M:%S.%q %Z" --timestampFormat
                  timestamp
   in
     tmpFolder </> fileName
@@ -42,7 +42,7 @@ parseTmpFilePath tmpFilePath = do
   timestamp <- parseTimeM
     False -- Do not accept leading and trailing whitespace
     defaultTimeLocale
-    timestampFormat
+    "%Y-%m-%d %H:%M:%S.%-q %Z" --timestampFormat
     fileName
 
   Just $ ValidTmpFile timestamp tmpFilePath

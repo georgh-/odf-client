@@ -1,6 +1,6 @@
 cabal-version:      3.4
 name:               odf-client
-version:            0.1
+version:            0.2
 
 synopsis: A sample ODF client
 
@@ -16,7 +16,7 @@ description:
     in case the client crashes
 
   * Processing of received messages is completely independent and can have
-    optimizations, for example, not processing a message version if a nwere
+    optimizations, for example, not processing a message version if a newer
     version has already been received
 
 -- license:
