@@ -30,7 +30,7 @@ genTmpFilePath timestamp tmpFolder =
   let
     fileName = formatTime
                  defaultTimeLocale
-                 "%Y-%m-%d %H:%M:%S.%q %Z" --timestampFormat
+                 timestampFormat
                  timestamp
   in
     tmpFolder </> fileName
@@ -42,7 +42,7 @@ parseTmpFilePath tmpFilePath = do
   timestamp <- parseTimeM
     False -- Do not accept leading and trailing whitespace
     defaultTimeLocale
-    "%Y-%m-%d %H:%M:%S.%-q %Z" --timestampFormat
+    timestampFormat
     fileName
 
   Just $ ValidTmpFile timestamp tmpFilePath
