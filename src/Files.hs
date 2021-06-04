@@ -5,6 +5,7 @@ module Files
   , genTmpFilePath
   , parseTmpFilePath
   , genMsgFilePath
+  , timestampFormat
   )
 where
 

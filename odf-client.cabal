@@ -70,6 +70,18 @@ executable odf-client
                   , Parse
                   , ODFHeader
 
+executable odf-stats
+  import:           common-all
+  main-is:          GenerateStats.hs
+  hs-source-dirs:   app, src
+  ghc-options:      -threaded -main-is GenerateStats
+  other-modules:    Paths_odf_client
+                  , Options
+                  , Files
+                  , ProcessMessages
+                  , Parse
+                  , ODFHeader
+
 test-suite odf-test
   import:           common-all
   type:             exitcode-stdio-1.0
