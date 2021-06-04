@@ -41,7 +41,7 @@ common common-all
                     
   default-language: Haskell2010
 
-  -- Recommnedations for GHC options 2021-05-03
+  -- Recommendations for GHC options 2021-05-03
   -- https://hackage.haskell.org/package/rio
   ghc-options:      -Wall
                     -Wincomplete-record-updates
