@@ -59,8 +59,8 @@ ignoreReq request = do
   -- The full request must be consumed before responding, otherwise
   -- it would be reported as an error by the HTTP sender
   runConduit
-      $ sourceRequestBody request
-     .| sinkNull
+    $ sourceRequestBody request
+   .| sinkNull
 
   pure $ mkResponse
     status200
