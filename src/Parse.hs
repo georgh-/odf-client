@@ -42,7 +42,7 @@ generateODFHeader attrsMap =
 
 parseHeaderAttrs :: Parser (HM.HashMap ByteString ByteString)
 parseHeaderAttrs = do
-  string "<?xml"
+  option "" $ string "<?xml"
   
   skipWhile (/= '<')
   string "<OdfBody"
