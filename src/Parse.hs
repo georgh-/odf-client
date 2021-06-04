@@ -31,8 +31,8 @@ generateODFHeader attrsMap =
     , odfResultStatus    = getAttribute "ResultStatus"
     , odfLanguage        = getAttribute "Language"
     , odfFeedFlag        = getAttribute "FeedFlag"
-    , odfDateMessage     = getAttribute "DateMessage"
-    , odfTimeMessage     = getAttribute "TimeMessage"
+    , odfDateMessage     = getAttribute "Date"
+    , odfTimeMessage     = getAttribute "Time"
     , odfLogicalDate     = getAttribute "LogicalDate"
     , odfSource          = getAttribute "Source"
     }
