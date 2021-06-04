@@ -29,7 +29,6 @@ extra-source-files: CHANGELOG.md
 
 common common-all
   build-depends:    base ^>=4.14.1.0
-                  , dhall ^>=1.38.1
                   , optparse-applicative ^>=0.16.1.0
                   , rio ^>=0.1.20.0
                   , warp ^>=3.3.15
