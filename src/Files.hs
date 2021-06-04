@@ -39,12 +39,13 @@ genTmpFilePath timestamp tmpFolder =
 parseTmpFilePath :: FilePath -> Maybe ValidTmpFile
 parseTmpFilePath tmpFilePath = do
   let fileName = takeFileName tmpFilePath
-
+      datePart = takeWhile (/= '~') fileName
+      
   timestamp <- parseTimeM
     False -- Do not accept leading and trailing whitespace
     defaultTimeLocale
     timestampFormat
-    fileName
+    datePart
 
   Just $ ValidTmpFile timestamp tmpFilePath
 
