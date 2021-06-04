@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
-{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 module Parse (ODFHeader, parseODFHeader, parseGZipHeader) where
 
 import RIO hiding (takeWhile)
