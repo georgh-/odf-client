@@ -42,10 +42,10 @@ processTmpFile msgFolder tmpFile = do
                   <*> Just odfHeader
                   <*> Just isCompressed
                   <*> Just msgFolder
-  maybe
-    (pure ())
-    (renameFileParents tmpFile)
-    mDestPath
+
+  case mDestPath of
+    Just dstFile -> renameFileParents tmpFile dstFile
+    Nothing      -> pure ()
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
 extractODFHeader isCompressed file = do
