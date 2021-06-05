@@ -70,10 +70,7 @@ isGzipCompressed file = do
       $ src
      .| sinkParserEither parseGZipHeader
 
-  pure $ either
-    (const False)
-    (const True)
-    parsed
+  pure $ isRight parsed
 
 renameFileParents :: FilePath -> FilePath -> IO ()
 renameFileParents origFile destFile = do
