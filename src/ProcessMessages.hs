@@ -10,7 +10,7 @@ import RIO hiding (mapM_)
 import RIO.FilePath (takeDirectory)
 import RIO.Directory (createDirectoryIfMissing, renameFile)
 
-import Data.Conduit ( (.|), runConduitRes, ConduitT, runConduit, awaitForever, yield )
+import Data.Conduit ( (.|), runConduitRes, runConduit, awaitForever, yield )
 import Data.Conduit.Combinators (mapM_, sourceDirectory, withSourceFile)
 import Data.Conduit.Zlib (ungzip)
 import Data.Conduit.Attoparsec (sinkParserEither)
@@ -28,8 +28,8 @@ processTmpFiles opts =
     $ sourceDirectory (optTmpFolder opts)
    .| sinkProcessFile (optMsgFolder opts)
 
-sinkProcessFile :: MonadIO m => FilePath -> ConduitT FilePath o m ()
-sinkProcessFile msgFolder = mapM_ $ liftIO . processTmpFile msgFolder
+  where
+    sinkProcessFile msgFolder = mapM_ $ liftIO . processTmpFile msgFolder
 
 processTmpFile :: FilePath -> FilePath -> IO ()
 processTmpFile msgFolder tmpFile = do
