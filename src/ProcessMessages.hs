@@ -1,8 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module ProcessMessages (tmpFilesProcessor, processTmpFiles) where
 
-import Files (parseTmpFilePath, genMsgFilePath)
-import Options (Options, optTmpFolder, optMsgFolder)
+import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath)
+import Options (Options, optTmpFolder, optMsgFolder, optErrFolder)
 import ODFHeader
 import Parse (parseODFHeader, parseGZipHeader)
 
@@ -26,26 +26,26 @@ processTmpFiles :: Options -> IO ()
 processTmpFiles opts =
   runConduitRes
     $ sourceDirectory (optTmpFolder opts)
-   .| sinkProcessFile (optMsgFolder opts)
+   .| sinkProcessFile (optMsgFolder opts) (optErrFolder opts)
 
   where
-    sinkProcessFile msgFolder = mapM_ $ liftIO . processTmpFile msgFolder
+    sinkProcessFile msgFolder errFolder =
+      mapM_ $ liftIO . processTmpFile msgFolder errFolder
 
-processTmpFile :: FilePath -> FilePath -> IO ()
-processTmpFile msgFolder tmpFile = do
+processTmpFile :: FilePath -> FilePath -> FilePath -> IO ()
+processTmpFile msgFolder errFolder tmpFile = do
   isCompressed <- isGzipCompressed tmpFile
   odfHeader <- extractODFHeader isCompressed tmpFile
-  let
-    mValidTmpFile = parseTmpFilePath tmpFile
-    mDestPath = genMsgFilePath
-                  <$> mValidTmpFile
-                  <*> Just odfHeader
-                  <*> Just isCompressed
-                  <*> Just msgFolder
 
-  case mDestPath of
-    Just dstFile -> renameFileParents tmpFile dstFile
-    Nothing      -> pure ()
+  let destFile =
+        case parseTmpFilePath tmpFile of
+          Nothing ->
+            genErrFilePath tmpFile errFolder
+
+          Just validTmpFile ->
+            genMsgFilePath validTmpFile odfHeader isCompressed msgFolder
+
+  renameFileParents tmpFile destFile
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
 extractODFHeader isCompressed file = do

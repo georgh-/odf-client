@@ -3,6 +3,7 @@ module Options
   , optPort
   , optTmpFolder
   , optMsgFolder
+  , optErrFolder
   , getOptions)
 where
 
@@ -16,6 +17,7 @@ data Options = Options
   { optPort :: !Int
   , optTmpFolder :: !String
   , optMsgFolder :: !String
+  , optErrFolder :: !String
   } deriving Show
 
 optsParser :: ParserInfo Options
@@ -35,7 +37,7 @@ versionOption = infoOption
 
 programOptions :: Parser Options
 programOptions =
-  Options <$> port <*> tmpFolder <*> msgFolder
+  Options <$> port <*> tmpFolder <*> msgFolder <*> errFolder
   where
     port = option auto
       (short 'p'
@@ -56,6 +58,14 @@ programOptions =
         <> long "message-dir"
         <> help "Directory to use for messages (default: ./messages)"
         <> value "./messages"
+        <> metavar "PATH")
+
+    errFolder = strOption
+      (short 'e'
+        <> long "errors-dir"
+        <> help "Directory used to store unkown files found in tmp folder\
+                \(files not genereated by this program) (default: ./error)"
+        <> value "./error"
         <> metavar "PATH")
 
 getOptions :: IO Options

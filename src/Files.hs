@@ -5,6 +5,7 @@ module Files
   , genTmpFilePath
   , parseTmpFilePath
   , genMsgFilePath
+  , genErrFilePath
   , timestampFormat
   )
 where
@@ -70,5 +71,8 @@ genMsgFilePath (ValidTmpFile timestamp _) odfHeader isCompressed msgFolder =
     
     fileName = timestampPart <> "~" <> odfPart <> ext
   in
-    msgFolder </> datePath </> fileName 
+    msgFolder </> datePath </> fileName
 
+genErrFilePath :: FilePath -> FilePath -> FilePath
+genErrFilePath tmpFile errFolder =
+  errFolder </> takeFileName tmpFile
