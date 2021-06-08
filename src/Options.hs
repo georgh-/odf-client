@@ -4,6 +4,7 @@ module Options
   , optTmpFolder
   , optMsgFolder
   , optErrFolder
+  , optDbFile
   , getOptions)
 where
 
@@ -18,6 +19,7 @@ data Options = Options
   , optTmpFolder :: !String
   , optMsgFolder :: !String
   , optErrFolder :: !String
+  , optDbFile    :: !String
   } deriving Show
 
 optsParser :: ParserInfo Options
@@ -37,7 +39,7 @@ versionOption = infoOption
 
 programOptions :: Parser Options
 programOptions =
-  Options <$> port <*> tmpFolder <*> msgFolder <*> errFolder
+  Options <$> port <*> tmpFolder <*> msgFolder <*> errFolder <*> dbFile
   where
     port = option auto
       (short 'p'
@@ -67,6 +69,12 @@ programOptions =
                 \(files not genereated by this program) (default: ./error)"
         <> value "./error"
         <> metavar "PATH")
+
+    dbFile = strOption
+      (long "db-file"
+        <> help "Database file to use) (default: ./messagesDb.sqlite)"
+        <> value "./messagesDb.sqlite"
+        <> metavar "FILE_PATH")
 
 getOptions :: IO Options
 getOptions = execParser optsParser
