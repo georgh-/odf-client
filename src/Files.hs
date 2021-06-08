@@ -54,8 +54,8 @@ parseTmpFilePath tmpFilePath = do
 
   Just $ ValidTmpFile timestamp tmpFilePath
 
-genMsgFilePath :: ValidTmpFile -> ODFHeader -> Bool -> FilePath -> FilePath
-genMsgFilePath (ValidTmpFile timestamp _) odfHeader isCompressed msgFolder =
+genMsgFilePath :: ODFHeader -> Bool -> FilePath -> ValidTmpFile -> FilePath
+genMsgFilePath odfHeader isCompressed msgFolder (ValidTmpFile timestamp _) =
   let
     datePath =
       formatTime
@@ -78,5 +78,5 @@ genMsgFilePath (ValidTmpFile timestamp _) odfHeader isCompressed msgFolder =
     msgFolder </> datePath </> fileName
 
 genErrFilePath :: FilePath -> FilePath -> FilePath
-genErrFilePath tmpFile errFolder =
+genErrFilePath errFolder tmpFile =
   errFolder </> takeFileName tmpFile

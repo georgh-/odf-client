@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module ProcessMessages (tmpFilesProcessor, processTmpFiles) where
 
-import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath, ValidTmpFile (vfTimestamp), timestampFormatDb)
+import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath, ValidTmpFile (vfTimestamp, vfFilePath), timestampFormatDb)
 import Options (Options (optDbFile), optTmpFolder, optMsgFolder, optErrFolder)
 import ODFHeader
 import Parse (parseODFHeader, parseGZipHeader)
@@ -45,15 +45,16 @@ processTmpFile :: Connection -> FilePath -> FilePath -> FilePath -> IO ()
 processTmpFile conn msgFolder errFolder tmpFile = do
   case parseTmpFilePath tmpFile of
     Nothing           -> tmpFileError errFolder tmpFile
-    Just validTmpFile -> tmpFileValid conn validTmpFile msgFolder tmpFile
+    Just validTmpFile -> tmpFileValid conn msgFolder validTmpFile
 
 tmpFileError :: FilePath -> FilePath -> IO ()
-tmpFileError tmpFile errFolder =
-  let destFile = genErrFilePath tmpFile errFolder
+tmpFileError errFolder tmpFile =
+  let destFile = genErrFilePath errFolder tmpFile
   in renameFileParents tmpFile destFile
 
-tmpFileValid :: Connection -> ValidTmpFile -> FilePath -> FilePath -> IO ()
-tmpFileValid conn validTmpFile msgFolder tmpFile = do
+tmpFileValid :: Connection -> FilePath -> ValidTmpFile -> IO ()
+tmpFileValid conn msgFolder validTmpFile = do
+  let tmpFile = vfFilePath validTmpFile
   isCompressed <- isGzipCompressed tmpFile
   odfHeader <- extractODFHeader isCompressed tmpFile
   fileSize <- getFileSize tmpFile
@@ -63,7 +64,7 @@ tmpFileValid conn validTmpFile msgFolder tmpFile = do
                   timestampFormatDb
                   (vfTimestamp validTmpFile)
 
-      destFile = genMsgFilePath validTmpFile odfHeader isCompressed msgFolder
+      destFile = genMsgFilePath odfHeader isCompressed msgFolder validTmpFile
 
       message = buildMessage
                   odfHeader
