@@ -1,5 +1,5 @@
 module Files
-  ( ValidTmpFile
+  ( ValidTmpFile(ValidTmpFile)
   , vfTimestamp
   , vfFilePath
   , genTmpFilePath
