@@ -7,6 +7,7 @@ module Files
   , genMsgFilePath
   , genErrFilePath
   , timestampFormat
+  , timestampFormatDb
   )
 where
 
@@ -23,6 +24,9 @@ data ValidTmpFile = ValidTmpFile
 
 timestampFormat :: String
 timestampFormat = "%Y-%m-%d_%H-%M-%S.%q%z"
+
+timestampFormatDb :: String
+timestampFormatDb = "%Y-%m-%dT%H:%M:%S.%q%z"
 
 messageFolderDateFormat :: String
 messageFolderDateFormat = "%Y-%m-%d"
