@@ -2,3 +2,4 @@ dist-newstyle/
 messages/
 tmp/
 messagesdb
+messagesDb.sqlite
