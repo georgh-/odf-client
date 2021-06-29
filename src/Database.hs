@@ -29,6 +29,10 @@ import ODFHeader
 import RIO.Time (ZonedTime)
 import RIO.Text
 
+timestampFormatDb :: String
+timestampFormatDb = "%Y-%m-%dT%H:%M:%S.%q%z"
+
+
 data ODFMessageT f
   = ODFMessage
   { _msgCompetitionCode :: Columnar f Text
@@ -71,7 +75,6 @@ newtype MessagesDb f
 
 messagesDb :: CheckedDatabaseSettings Sqlite MessagesDb
 messagesDb = defaultMigratableDbSettings
-
 
 -- https://www.fosskers.ca/en/blog/beam-migration
 initializeDb :: FilePath -> IO ()
@@ -116,7 +119,7 @@ withMessagesDb dbFile callback =
   withConnection dbFile $ \conn ->
     connectionSettings conn >> callback conn
 
-buildMessage :: ODFHeader -> String -> Integer -> FilePath -> ODFMessage
+buildMessage :: ODFHeader -> ZonedTime -> Integer -> FilePath -> ODFMessage
 buildMessage header recTime fileSize path =
   ODFMessage
   { _msgCompetitionCode = odfCompetitionCode header
