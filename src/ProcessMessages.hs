@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module ProcessMessages (tmpFilesProcessor, processTmpFiles) where
 
-import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath, ValidTmpFile (ValidTmpFile, vfTimestamp, vfFilePath), timestampFormatDb)
+import Files 
 import Options (Options (optDbFile), optTmpFolder, optMsgFolder, optErrFolder)
 import ODFHeader
 import Parse (parseODFHeader, parseGZipHeader)
@@ -58,21 +58,10 @@ tmpFileValid conn msgFolder vtf@(ValidTmpFile tstamp tmpFile) = do
   odfHeader <- extractODFHeader isCompressed tmpFile
   fileSize <- getFileSize tmpFile
 
-  let recTime = formatTime
-                  defaultTimeLocale
-                  timestampFormatDb
-                  tstamp
-
-      destFile = genMsgFilePath odfHeader isCompressed msgFolder vtf
-
-      message = buildMessage
-                  odfHeader
-                  recTime
-                  fileSize
-                  destFile
+  let destFile = genMsgFilePath odfHeader isCompressed msgFolder vtf
+      message = buildMessage odfHeader tstamp fileSize destFile
 
   renameFileParents tmpFile destFile
-
   insertMessage conn message
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
@@ -107,3 +96,4 @@ renameFileParents origFile destFile = do
 
   createDirectoryIfMissing createParents destFolder
   renameFile origFile destFile
+
