@@ -13,7 +13,7 @@ parseGZipHeader = do
   AB.word8 0x1f
   AB.word8 0x8b
   pure ()
-  
+
 parseODFHeader :: Parser ODFHeader
 parseODFHeader = 
   generateODFHeader <$> parseHeaderAttrs
@@ -47,10 +47,7 @@ parseHeaderAttrs = do
   string "<OdfBody"
 
   skipSpace
-  attrsList <- many parseAttribute
-  skipSpace
-
-  pure $ HM.fromList attrsList
+  HM.fromList <$> many parseAttribute
 
 parseAttribute :: Parser (ByteString, ByteString)
 parseAttribute = do
@@ -70,7 +67,6 @@ parseAttribute = do
 skipSpace :: Parser ()
 skipSpace = skipWhile isXMLSpace
 
--- http://www.w3.org/TR/2008/REC-xml-20081126/#sec-common-syn
 isXMLSpace :: Char -> Bool
 isXMLSpace ' '  = True
 isXMLSpace '\t' = True
