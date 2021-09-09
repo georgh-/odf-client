@@ -1,0 +1,16 @@
+[Unit]
+Description=ODF Client
+After=network.target nss-lookup.target
+Wants=network.target
+
+[Service]
+# This service runs as root. You may consider to run it as another user for security concerns.
+#User=odftest
+#Group=odftest
+Type=simple
+PIDFile=/run/odf-test-%i.pid
+ExecStart=/usr/local/bin/odf-test --port 8080 --temp-dir --message-dir --errors-dir
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
