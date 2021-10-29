@@ -1,4 +1,4 @@
-cabal-version:      3.4
+cabal-version:      3.6
 name:               odf-client
 version:            0.3
 
@@ -28,9 +28,10 @@ maintainer:         ostankino.tower@gmail.com
 extra-source-files: CHANGELOG.md
 
 common common-all
-  build-depends:    base ^>=4.14.1.0
+  build-depends:    base ^>=4.15.0.0
                   , optparse-applicative ^>=0.16.1.0
-                  , rio ^>=0.1.20.0
+                  , rio ^>=0.1.21.0
+                  , primitive ^>=0.7.2
                   , warp ^>=3.3.15
                   , wai ^>=3.2.3
                   , wai-conduit ^>=3.0.0.4
@@ -66,7 +67,7 @@ executable odf-client
                   , Options
                   , Receiver
                   , Files
-                  , ProcessMessages
+                  , Processor
                   , Parse
                   , ODFHeader
 
@@ -78,7 +79,7 @@ executable odf-stats
   other-modules:    Paths_odf_client
                   , Options
                   , Files
-                  , ProcessMessages
+                  , Processor
                   , Parse
                   , ODFHeader
 

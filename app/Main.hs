@@ -3,7 +3,7 @@ module Main (main) where
 
 import Options (getOptions)
 import Receiver (receive)
-import ProcessMessages (tmpFilesProcessor)
+import Processor (tmpFilesProcessor)
   
 import RIO
 import Control.Concurrent (forkIO)

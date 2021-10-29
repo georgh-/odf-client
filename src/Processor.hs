@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module ProcessMessages (tmpFilesProcessor, processTmpFiles) where
+module Processor (tmpFilesProcessor, processTmpFiles) where
 
 import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath)
 import Options (Options, optTmpFolder, optMsgFolder, optErrFolder)
