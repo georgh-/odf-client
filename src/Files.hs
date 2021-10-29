@@ -38,17 +38,18 @@ genTmpFilePath timestamp tmpFolder =
     tmpFolder </> fileName
 
 parseTmpFilePath :: FilePath -> Maybe ValidTmpFile
-parseTmpFilePath tmpFilePath = do
-  let fileName = takeFileName tmpFilePath
-      datePart = takeWhile (/= '~') fileName
+parseTmpFilePath tmpFilePath =
+  let
+    fileName = takeFileName tmpFilePath
+    datePart = takeWhile (/= '~') fileName
       
-  timestamp <- parseTimeM
-    False -- Do not accept leading and trailing whitespace
-    defaultTimeLocale
-    timestampFormat
-    datePart
-
-  Just $ ValidTmpFile timestamp tmpFilePath
+    timestampM = parseTimeM
+      False -- Do not accept leading and trailing whitespace
+      defaultTimeLocale
+      timestampFormat
+      datePart
+  in
+    ValidTmpFile <$> timestampM <*> pure tmpFilePath
 
 genMsgFilePath :: ValidTmpFile -> ODFHeader -> Bool -> FilePath -> FilePath
 genMsgFilePath (ValidTmpFile timestamp _) odfHeader isCompressed msgFolder =
