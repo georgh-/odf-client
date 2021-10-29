@@ -21,6 +21,8 @@ data ValidTmpFile = ValidTmpFile
   , vfFilePath :: !FilePath
   } deriving Show
 
+-- Used in both tmp files and processed files, to allow reprocessing of
+-- messages by moving them to the tmp folder
 timestampFormat :: String
 timestampFormat = "%Y-%m-%d_%H-%M-%S.%q%z"
 
@@ -41,6 +43,8 @@ parseTmpFilePath :: FilePath -> Maybe ValidTmpFile
 parseTmpFilePath tmpFilePath =
   let
     fileName = takeFileName tmpFilePath
+
+    -- Allow reprocessing messages by moving them to tmp folder
     datePart = takeWhile (/= '~') fileName
       
     timestampM = parseTimeM
