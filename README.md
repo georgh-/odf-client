@@ -30,3 +30,15 @@ Simple receiver of ODF messages, compliant with odf.olympictech.org
 
   * `POST /odf` ODF Messages are stored and processed
 
+# FAQ
+
+## Why use file system to store messages between threads instead of using a queue?
+
+Two reasons:
+
+  1. Allows to reprocessing messages by just putting them in the tmp folder
+
+  2. If the processing is slow, a crash of the app would not result in lost messages
+
+This app is just an example, a template which can be extended with now complex
+(slower) processing, such as saving to DB
