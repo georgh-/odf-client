@@ -48,29 +48,29 @@ processTmpFile msgFolder errFolder tmpFile = do
   renameFileParents tmpFile destFile
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
-extractODFHeader isCompressed file = do
+extractODFHeader isCompressed file =
   let
     condUngzip =
       if isCompressed
         then ungzip
         else awaitForever yield
 
-  parsed <- withSourceFile file $ \src ->
-    runConduit
-      $ src
-     .| condUngzip
-     .| sinkParserEither parseODFHeader
-
-  pure $ fromRight emptyODFHeader parsed
+    parsed = withSourceFile file $ \src ->
+      runConduit
+        $ src
+       .| condUngzip
+       .| sinkParserEither parseODFHeader
+  in
+    fromRight emptyODFHeader <$> parsed
 
 isGzipCompressed :: FilePath -> IO Bool
-isGzipCompressed file = do
-  parsed <- withSourceFile file $ \src ->
-    runConduit
-      $ src
-     .| sinkParserEither parseGZipHeader
-
-  pure $ isRight parsed
+isGzipCompressed file =
+  let parsed = withSourceFile file $ \src ->
+        runConduit
+          $ src
+         .| sinkParserEither parseGZipHeader
+  in
+    isRight <$> parsed
 
 renameFileParents :: FilePath -> FilePath -> IO ()
 renameFileParents origFile destFile = do
