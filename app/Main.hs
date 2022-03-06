@@ -7,6 +7,7 @@ import Processor (tmpFilesProcessor)
   
 import RIO
 import Control.Concurrent (forkIO)
+import App (Env(Env, envOpts, envMsgsPending))
 
 main :: IO ()
 main = do
@@ -16,6 +17,11 @@ main = do
   -- pending messages are processed
   pendingFiles <- newTMVarIO True
 
-  forkIO $ tmpFilesProcessor pendingFiles opts
+  let env = Env
+        { envOpts = opts
+        , envMsgsPending = pendingFiles
+        }
+
+  forkIO $ runReaderT tmpFilesProcessor env
   receive pendingFiles opts
   

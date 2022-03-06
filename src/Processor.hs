@@ -1,8 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Processor (tmpFilesProcessor, processTmpFiles) where
 
+import App
 import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath)
-import Options (Options, optTmpFolder, optMsgFolder, optErrFolder)
 import ODFHeader
 import Parse (parseODFHeader, parseGZipHeader)
 
@@ -14,28 +13,31 @@ import Data.Conduit ( (.|), runConduitRes, runConduit, awaitForever, yield )
 import Data.Conduit.Combinators (mapM_, sourceDirectory, withSourceFile)
 import Data.Conduit.Zlib (ungzip)
 import Data.Conduit.Attoparsec (sinkParserEither)
+import Options (optTmpFolder, Options (optErrFolder, optMsgFolder))
 
 
-tmpFilesProcessor :: TMVar Bool -> Options -> IO ()
-tmpFilesProcessor pendingFiles opts =
+tmpFilesProcessor :: App ()
+tmpFilesProcessor = do
+  pendingFiles <- asks envMsgsPending
+
   forever $ do
     _ <- atomically $ takeTMVar pendingFiles
-    processTmpFiles opts
+    processTmpFiles
 
-processTmpFiles :: Options -> IO ()
-processTmpFiles opts =
+processTmpFiles :: App ()
+processTmpFiles = do
+  tmpFolder <- askOpt optTmpFolder
+
   runConduitRes
-    $ sourceDirectory (optTmpFolder opts)
-   .| sinkProcessFile (optMsgFolder opts) (optErrFolder opts)
+    $ sourceDirectory tmpFolder
+   .| mapM_ (lift . processTmpFile)
 
-  where
-    sinkProcessFile msgFolder errFolder =
-      mapM_ $ liftIO . processTmpFile msgFolder errFolder
-
-processTmpFile :: FilePath -> FilePath -> FilePath -> IO ()
-processTmpFile msgFolder errFolder tmpFile = do
-  isCompressed <- isGzipCompressed tmpFile
-  odfHeader <- extractODFHeader isCompressed tmpFile
+processTmpFile :: FilePath -> App ()
+processTmpFile tmpFile = do
+  isCompressed <- liftIO $ isGzipCompressed tmpFile
+  odfHeader <- liftIO $ extractODFHeader isCompressed tmpFile
+  errFolder <- askOpt optErrFolder
+  msgFolder <- askOpt optMsgFolder
 
   let destFile =
         case parseTmpFilePath tmpFile of
@@ -45,7 +47,7 @@ processTmpFile msgFolder errFolder tmpFile = do
           Just validTmpFile ->
             genMsgFilePath validTmpFile odfHeader isCompressed msgFolder
 
-  renameFileParents tmpFile destFile
+  liftIO $ renameFileParents tmpFile destFile
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
 extractODFHeader isCompressed file =
