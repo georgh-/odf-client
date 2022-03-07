@@ -19,7 +19,7 @@ import Options (optTmpFolder, Options (optErrFolder, optMsgFolder))
 tmpFilesProcessor :: App ()
 tmpFilesProcessor = do
   pendingFiles <- asks envMsgsPending
-
+  
   forever $ do
     _ <- atomically $ takeTMVar pendingFiles
     processTmpFiles

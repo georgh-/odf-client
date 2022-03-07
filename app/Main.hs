@@ -7,7 +7,8 @@ import Processor (tmpFilesProcessor)
   
 import RIO
 import Control.Concurrent (forkIO)
-import App (Env(Env, envOpts, envMsgsPending))
+import App (Env(Env, envOpts, envMsgsPending, envLogAction), runApp)
+import Colog (richMessageAction)
 
 main :: IO ()
 main = do
@@ -20,8 +21,9 @@ main = do
   let env = Env
         { envOpts = opts
         , envMsgsPending = pendingFiles
+        , envLogAction = richMessageAction
         }
 
-  forkIO $ runReaderT tmpFilesProcessor env
+  forkIO $ runApp tmpFilesProcessor env
   receive pendingFiles opts
   
