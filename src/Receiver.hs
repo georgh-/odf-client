@@ -2,7 +2,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Receiver (receive) where
 
-import Options (Options, optPort, optTmpFolder)
+import Options (optPort, optTmpFolder)
 import Files (genTmpFilePath)
 
 import Network.Wai
@@ -18,17 +18,35 @@ import qualified RIO.ByteString.Lazy as LBS
 import Data.Conduit
 import Data.Conduit.Combinators (withSinkFile, sinkNull)
 import Network.Wai.Conduit
+import App (envMsgsPending, askOpt, Env (envMsgsPending), runApp, App)
 
-receive :: TMVar Bool -> Options -> IO ()
-receive pendingFiles ops = do
-  let port = optPort ops
-      tmpFolder = optTmpFolder ops
+-- Note: because App is not using tagles/mtl style (it's a naive monolythic
+-- monad, simpler to define and use), we have to convert the Wai "run"
+-- function from IO to APP by lifting and running the App as required instead
+-- of IO. This ensures we have all the environment and logging facilities
+-- provided by the App type.
+--
+-- These details are encapsulated in the "receive" function, the rest of the
+-- module can be easily understood disregarding this function.
+--
+-- Summary:
+--   normal waiApp :: Request -> (Response -> IO  ResponseReceived) -> IO  ResponseReceived
+--   lifted server :: Request -> (Response -> App ResponseReceived) -> App ResponseReceived
+
+receive :: App ()
+receive = do
+  port <- askOpt optPort
+  env <- ask
+
+  liftIO $ run port (appLiftedServer env)
+
+  where
+    appLiftedServer env req res = runApp (server req $ liftedResponse res) env
+    liftedResponse res = liftIO . res
   
-  run port (waiApp pendingFiles tmpFolder)
-
-waiApp :: TMVar Bool ->  String -> Application
-waiApp pendingFiles tmpFolder request respond = do
-  timeReceived <- getZonedTime
+server :: Request -> (Response -> App ResponseReceived) -> App ResponseReceived
+server request respond = do
+  timeReceived <- liftIO getZonedTime
 
   let path = T.concat $ pathInfo request
       method = requestMethod request
@@ -39,12 +57,8 @@ waiApp pendingFiles tmpFolder request respond = do
                _  -> respond $ mkResponse status404 ""
 
     "POST" -> case path of
-               ""    -> respond =<< ignoreReq request
-               "odf" -> respond =<< processReq
-                                      pendingFiles
-                                      timeReceived
-                                      tmpFolder
-                                      request
+               ""    -> respond =<< liftIO (ignoreReq request)
+               "odf" -> respond =<< processReq timeReceived request
                _     -> respond $ mkResponse status404 ""
 
     -- HTTP Specifies HEAD is mandatory
@@ -66,20 +80,23 @@ ignoreReq request = do
     status200
     "Message received correctly. This path \"/\" ignores it"
 
-processReq ::  TMVar Bool -> ZonedTime -> FilePath -> Request -> IO Response
-processReq pendingFiles timestamp tmpFolder request = do
+processReq :: ZonedTime -> Request -> App Response
+processReq timestamp request = do
+  pendingFiles <- asks envMsgsPending
+  tmpFolder <- askOpt optTmpFolder
+
   let
     filePath = genTmpFilePath timestamp tmpFolder
     createParents = True
   
-  createDirectoryIfMissing createParents tmpFolder
+  liftIO $ createDirectoryIfMissing createParents tmpFolder
   writeBody filePath request
 
-  _ <- atomically $ tryPutTMVar pendingFiles True
+  _ <- liftIO $ atomically $ tryPutTMVar pendingFiles True
   
   pure $ mkResponse status200 "Message recived and saved"
 
-writeBody :: FilePath -> Request -> IO ()
+writeBody :: FilePath -> Request -> App ()
 writeBody filePath request =
   withSinkFile filePath $ \dest ->
     runConduit

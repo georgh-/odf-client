@@ -25,5 +25,5 @@ main = do
         }
 
   forkIO $ runApp tmpFilesProcessor env
-  receive pendingFiles opts
+  runApp receive env
   
