@@ -20,7 +20,7 @@ import Data.Conduit.Combinators (withSinkFile, sinkNull)
 import Network.Wai.Conduit
 import App (envMsgsPending, askOpt, Env (envMsgsPending), runApp, App)
 
--- Note: because App is not using tagles/mtl style (it's a naive monolythic
+-- Note: because App is not using tagless/mtl style (it's a naive monolythic
 -- monad, simpler to define and use), we have to convert the Wai "run"
 -- function from IO to APP by lifting and running the App as required instead
 -- of IO. This ensures we have all the environment and logging facilities
