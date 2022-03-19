@@ -9,7 +9,7 @@ import Network.Wai
 import Network.HTTP.Types
 import Network.Wai.Handler.Warp (run)
 
-import RIO
+import RIO hiding (log)
 import RIO.Time
 import RIO.Directory (createDirectoryIfMissing)
 import qualified RIO.Text as T
@@ -19,6 +19,7 @@ import Data.Conduit
 import Data.Conduit.Combinators (withSinkFile, sinkNull)
 import Network.Wai.Conduit
 import App (envMsgsPending, askOpt, Env (envMsgsPending), runApp, App)
+import Colog (log, Severity(Info))
 
 -- Note: because App is not using tagless/mtl style (it's a naive monolythic
 -- monad, simpler to define and use), we have to convert the Wai "run"
@@ -38,32 +39,47 @@ receive = do
   port <- askOpt optPort
   env <- ask
 
+  log Info $ T.pack $ "Starting ODF receiver on port " ++ show port
   liftIO $ run port (appLiftedServer env)
 
   where
     appLiftedServer env req res = runApp (server req $ liftedResponse res) env
     liftedResponse res = liftIO . res
-  
+
 server :: Request -> (Response -> App ResponseReceived) -> App ResponseReceived
 server request respond = do
   timeReceived <- liftIO getZonedTime
 
   let path = T.concat $ pathInfo request
-      method = requestMethod request
+      method = decodeUtf8Lenient $ requestMethod request
+      respondLog resp = do
+        timeProcessed <- liftIO getCurrentTime
 
+        let processingTime = diffUTCTime timeProcessed $ zonedTimeToUTC timeReceived
+
+        log Info $ T.pack $ concat
+          ["Processed request: "
+          , show $ statusCode $ responseStatus resp, " "
+          , show $ statusMessage $ responseStatus resp, " "
+          ,"Processing time: ", show processingTime]
+
+        respond resp
+
+
+  log Info $ T.concat ["Received request: ", method, " ", path]
   case method of
     "GET"  -> case path of
-               "" -> respond $ mkResponse status200 helpText
-               _  -> respond $ mkResponse status404 ""
+               "" -> respondLog $ mkResponse status200 helpText
+               _  -> respondLog $ mkResponse status404 ""
 
     "POST" -> case path of
-               ""    -> respond =<< liftIO (ignoreReq request)
-               "odf" -> respond =<< processReq timeReceived request
-               _     -> respond $ mkResponse status404 ""
+               ""    -> respondLog =<< liftIO (ignoreReq request)
+               "odf" -> respondLog =<< processReq timeReceived request
+               _     -> respondLog $ mkResponse status404 ""
 
     -- HTTP Specifies HEAD is mandatory
-    "HEAD" -> respond $ mkResponse status200 ""
-    _      -> respond $ mkResponse status405 "Only GET and POST are accepted."
+    "HEAD" -> respondLog $ mkResponse status200 ""
+    _      -> respondLog $ mkResponse status405 "Only GET and POST are accepted."
 
 mkResponse :: Status -> LBS.ByteString -> Response
 mkResponse status = responseLBS status [("Content-Type", "text/plain")]
@@ -88,12 +104,12 @@ processReq timestamp request = do
   let
     filePath = genTmpFilePath timestamp tmpFolder
     createParents = True
-  
+
   liftIO $ createDirectoryIfMissing createParents tmpFolder
   writeBody filePath request
 
   _ <- liftIO $ atomically $ tryPutTMVar pendingFiles True
-  
+
   pure $ mkResponse status200 "Message recived and saved"
 
 writeBody :: FilePath -> Request -> App ()
@@ -101,7 +117,7 @@ writeBody filePath request =
   withSinkFile filePath $ \dest ->
     runConduit
       $ sourceRequestBody request
-     .| dest 
+     .| dest
 
 helpText :: LBS.ByteString
 helpText =
@@ -110,5 +126,5 @@ helpText =
   \Use POST / to consume the HTTP request and ignore it\n\
   \n\
   \In any case, it is assumed that the body contains the message \
-  \directly, without specifying any parameter." 
+  \directly, without specifying any parameter."
 
