@@ -52,10 +52,7 @@ processTmpFile tmpFile = do
   errFolder <- askOpt optErrFolder
   msgFolder <- askOpt optMsgFolder
 
-  log Info $ T.pack $ concat
-    [ "Processing message: "
-    , tmpFile
-    ]
+  log Info $ T.pack $ "Processing message: " ++ tmpFile
 
   let destFile =
         case parseTmpFilePath tmpFile of
