@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Processor (tmpFilesProcessor, processTmpFiles) where
 
 import App
@@ -5,24 +6,36 @@ import Files (parseTmpFilePath, genMsgFilePath, genErrFilePath)
 import ODFHeader
 import Parse (parseODFHeader, parseGZipHeader)
 
-import RIO hiding (mapM_)
+import RIO hiding (mapM_, log)
 import RIO.FilePath (takeDirectory)
-import RIO.Directory (createDirectoryIfMissing, renameFile)
+import RIO.Directory (createDirectoryIfMissing, renameFile, getCurrentDirectory)
 
 import Data.Conduit ( (.|), runConduitRes, runConduit, awaitForever, yield )
 import Data.Conduit.Combinators (mapM_, sourceDirectory, withSourceFile)
 import Data.Conduit.Zlib (ungzip)
 import Data.Conduit.Attoparsec (sinkParserEither)
 import Options (optTmpFolder, Options (optErrFolder, optMsgFolder))
+import qualified RIO.Text as T
+import Colog (log, Severity (Info))
 
 
 tmpFilesProcessor :: App ()
 tmpFilesProcessor = do
   pendingFiles <- asks envMsgsPending
+  opts <- asks envOpts
+  pwd <- liftIO getCurrentDirectory
+  
+  log Info $ T.pack $ concat
+    [ "Messages processor started "
+    , " workingDir: ", pwd
+    , " tmpFolder: ", optTmpFolder opts
+    , " msgFolder: ", optMsgFolder opts]
   
   forever $ do
     _ <- atomically $ takeTMVar pendingFiles
+    _ <- log Info "Processing messages in tmp folder..."
     processTmpFiles
+    log Info "Waiting for messages in tmp folder..."
 
 processTmpFiles :: App ()
 processTmpFiles = do
@@ -39,6 +52,11 @@ processTmpFile tmpFile = do
   errFolder <- askOpt optErrFolder
   msgFolder <- askOpt optMsgFolder
 
+  log Info $ T.pack $ concat
+    [ "Processing message: "
+    , tmpFile
+    ]
+
   let destFile =
         case parseTmpFilePath tmpFile of
           Nothing ->
@@ -48,6 +66,13 @@ processTmpFile tmpFile = do
             genMsgFilePath validTmpFile odfHeader isCompressed msgFolder
 
   liftIO $ renameFileParents tmpFile destFile
+
+  log Info $ T.pack $ concat
+    [ "Processed message: "
+    , tmpFile
+    , " Saved as: "
+    , destFile
+    ]
 
 extractODFHeader :: Bool -> FilePath -> IO ODFHeader
 extractODFHeader isCompressed file =
