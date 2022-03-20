@@ -48,7 +48,7 @@ receive = do
 
 server :: Request -> (Response -> App ResponseReceived) -> App ResponseReceived
 server request respond = do
-  timeReceived <- liftIO getZonedTime
+  timeReceived <- getZonedTime
 
   let
     path = T.concat $ pathInfo request
@@ -95,10 +95,10 @@ processReq timestamp request = do
     filePath = genTmpFilePath timestamp tmpFolder
     createParents = True
 
-  liftIO $ createDirectoryIfMissing createParents tmpFolder
+  createDirectoryIfMissing createParents tmpFolder
   writeBody filePath request
 
-  _ <- liftIO $ atomically $ tryPutTMVar pendingFiles True
+  _ <- atomically $ tryPutTMVar pendingFiles True
 
   pure $ mkResponse status200 "Message recived and saved"
 
@@ -120,7 +120,7 @@ helpText =
 
 elapsedTime :: ZonedTime -> App NominalDiffTime
 elapsedTime initialTime = do
-  finalTime <- liftIO getCurrentTime
+  finalTime <- getCurrentTime
   pure $ diffUTCTime finalTime $ zonedTimeToUTC initialTime
 
 loggedRespond :: ZonedTime

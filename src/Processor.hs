@@ -23,7 +23,7 @@ tmpFilesProcessor :: App ()
 tmpFilesProcessor = do
   pendingFiles <- asks envMsgsPending
   opts <- asks envOpts
-  pwd <- liftIO getCurrentDirectory
+  pwd <- getCurrentDirectory
   
   log Info $ T.pack $ concat
     [ "Messages processor started "
