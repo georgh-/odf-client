@@ -50,23 +50,13 @@ server :: Request -> (Response -> App ResponseReceived) -> App ResponseReceived
 server request respond = do
   timeReceived <- liftIO getZonedTime
 
-  let path = T.concat $ pathInfo request
-      method = decodeUtf8Lenient $ requestMethod request
-      respondLog resp = do
-        timeProcessed <- liftIO getCurrentTime
-
-        let processingTime = diffUTCTime timeProcessed $ zonedTimeToUTC timeReceived
-
-        log Info $ T.pack $ concat
-          ["Processed request: "
-          , show $ statusCode $ responseStatus resp, " "
-          , show $ statusMessage $ responseStatus resp, " "
-          ,"Processing time: ", show processingTime]
-
-        respond resp
-
+  let
+    path = T.concat $ pathInfo request
+    method = decodeUtf8Lenient $ requestMethod request
+    respondLog = loggedRespond timeReceived respond
 
   log Info $ T.concat ["Received request: ", method, " ", path]
+
   case method of
     "GET"  -> case path of
                "" -> respondLog $ mkResponse status200 helpText
@@ -127,4 +117,24 @@ helpText =
   \n\
   \In any case, it is assumed that the body contains the message \
   \directly, without specifying any parameter."
+
+elapsedTime :: ZonedTime -> App NominalDiffTime
+elapsedTime initialTime = do
+  finalTime <- liftIO getCurrentTime
+  pure $ diffUTCTime finalTime $ zonedTimeToUTC initialTime
+
+loggedRespond :: ZonedTime
+              -> (Response -> App ResponseReceived)
+              -> Response
+              -> App ResponseReceived
+loggedRespond receivedTime respond response = do
+  processingTime <- elapsedTime receivedTime
+
+  log Info $ T.pack $ concat
+    [ "Processed request: "
+    , show $ statusCode $ responseStatus response, " "
+    , show $ statusMessage $ responseStatus response, " "
+    , "Processing time: ", show processingTime]
+
+  respond response
 
